@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<h1>Данная страница предназначена для взаимодействия с системой pcocc </h1>
+	</form>
+	<br>
+	<form method='post' id="get_images">
+	{% csrf_token %}
+    	<input type="submit" class="btn btn-success"  name="get_images" value="Получить список с системными образами"/>
+	<br>
+	{%for state in getPCOCCImageList%}
+		<h4 id="image_{{ forloop.counter }}"></h4>
+	{%endfor%}
+	</form>
+	<br>
+	<form method="post" enctype="multipart/form-data">
+    	{% csrf_token %}
+	<h4>Введите название образа (не должно совпадать с одним из названий образов, имеющихся в списке "User images") </h4>
+	<input type="text" name="template_name">
+    	<input type="file" name="myfile">
+    	<button type="submit">Выполнить загрузку образа виртуальной машины на сервер</button>
+  	</form>	
+	<form method="post">
+        {% csrf_token %}
+        <h4>Введите название образа который необходимо удалить (должно совпадать с одним из названий образов, имеющихся в списке "User images") </h4>
+        <input type="text" name="template_remove_name">
+        <button type="submit">Выполнить удаление образа виртуальной машины с сервера</button>
+        </form>
+	<br><br>
+	<form method='post' id="get_templates">
+        {% csrf_token %}
+        <input type="submit" class="btn btn-success"  name="get_templates" value="Получить список с системными шаблонами"/>
+        <br>
+        {%for state in get_templates%}
+                <h4 id="template_{{ forloop.counter }}"></h4>
+        {%endfor%}
+        </form>
+
+
+	<form method="post" id="show_templates">
+        {% csrf_token %}
+        <h4>Введите название шаблона иноформацию о котором необходимо получить  (должно совпадать с одним из названий шаблонов) </h4>
+        <input type="text" name="show_templates_data">
+        <button type="submit">Получить информацию о шаблоне по имени</button>
+	<br>
+	 {%for state in pcocc_sh%}
+                <h4 id="sh_template_{{ forloop.counter }}"></h4>
+        {%endfor%}
+        </form>
+<script language="javascript">
+$(function() {
+    $("#get_images").click(function(event) {
+        // Stop form from submitting normally
+	 event.preventDefault();
+        var get_imagesForm = $(this);
+        // Send the data using post
+        var posting = $.post( get_imagesForm.attr('action'), get_imagesForm.serialize() );
+        // if success:
+        posting.done(function(data) {
+                {%for state in getPCOCCImageList%}
+			{%if getPCOCCImageList.count == 1%}
+                        	document.getElementById("image_{{ forloop.counter }}").innerHTML ="На данный момент отсутствуют доступные образы";
+			{%else%}
+				document.getElementById("image_{{ forloop.counter }}").innerHTML = "{{state}}";
+			{%endif%}
+                {%endfor%}
+        });
+        // if failure:
+    });
+    $("#get_templates").click(function(event) {
+        // Stop form from submitting normally
+         event.preventDefault();
+        var get_templatesForm = $(this);
+        // Send the data using post
+        var posting = $.post( get_templatesForm.attr('action'), get_templatesForm.serialize() );
+        // if success:
+        posting.done(function(data) {
+                {%for state in get_templates%}
+                        {%if get_templates.count == 1%}
+                                document.getElementById("template_{{ forloop.counter }}").innerHTML ="На данный момент отсутствуют доступные шаблоны";
+                        {%else%}
+                                document.getElementById("template_{{ forloop.counter }}").innerHTML = "{{state}}";
+                        {%endif%}
+                {%endfor%}
+        });
+        // if failure:
+    });
+    $("#show_templates").click(function(event) {
+        // Stop form from submitting normally
+         event.preventDefault();
+        var get_showForm = $(this);
+        // Send the data using post
+        var posting = $.post( get_showForm.attr('action'), get_showForm.serialize() );
+        // if success:
+        posting.done(function(data) {
+                {%for state in pcocc_sh%}
+                        {%if show_templates.count == 1%}
+                                document.getElementById("sh_template_{{ forloop.counter }}").innerHTML ="На данный момент отсутствуют доступные шаблоны";
+                        {%else%}
+                                document.getElementById("sh_template_{{ forloop.counter }}").innerHTML = "{{state}}";
+                        {%endif%}
+                {%endfor%}
+        });
+        // if failure:
+    });
+
+});
+</script>
+
+{%endblock%}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<h2>Данная страница предназначена для просмотра состояния доступных ресуров и запущенных задач</h2>
+	{% if user.is_authenticated %}
+	<form method="post" id="send_form">
+		{% csrf_token %}
+		<h4> Введите количество процессорных ядер </h4>
+		{{ form.CPU_Cores }} 
+		<br><br>
+		 <h4> Введите количество оперативной памяти </h4>
+		{{ form.RAM_Count_GB }} 
+		<br><br>
+		 <h4> Введите количество графических ускорителей </h4>
+		{{ form.GPU_Count }} 
+		<br><br>
+		<button type="submit" name="send_form" value="send_form" class="btn btn-success"> Создать виртуальную машину </button> <br>
+		<span>{{ error }} </span>
+	</form>
+	<br>
+	<form method='post' id="get_state">
+	{% csrf_token %}
+    	<input type="submit" class="btn btn-success"  name="get_state" value="Получить список с состоянием узлов"/>
+	<br>
+	{%for state in getNodeStates%}
+		<h4 id="node_{{ forloop.counter }}"></h4>
+	{%endfor%}
+	</form>
+	<form method='post' id="get_jobs">
+        {% csrf_token %}
+        <input type="submit" class="btn btn-success"  name="get_jobs" value="Получить список с состоянием задач"/>
+        <br>
+        {%for state in getJobStates%}
+                <h4 id="job_{{ forloop.counter }}"></h4>
+        {%endfor%}
+        </form>
+	{%endif%}
+<script language="javascript">
+$(function() {
+    $("#get_state").click(function(event) {
+        // Stop form from submitting normally
+	 event.preventDefault();
+        var get_stateForm = $(this);
+        // Send the data using post
+        var posting = $.post( get_stateForm.attr('action'), get_stateForm.serialize() );
+        // if success:
+        posting.done(function(data) {
+                {%for state in getNodeStates%}
+                        document.getElementById("node_{{ forloop.counter }}").innerHTML = "{{state}}";
+                {%endfor%}
+        });
+        // if failure:
+    });
+    $("#get_jobs").click(function(event) {
+        // Stop form from submitting normally
+         event.preventDefault();
+        var get_jobsForm = $(this);
+        // Send the data using post
+        var posting = $.post( get_jobsForm.attr('action'), get_jobsForm.serialize() );
+        // if success:
+        posting.done(function(data) {
+                {%for state in getJobStates%}
+			{%if getJobStates.count == 1%}
+                        	document.getElementById("job_{{ forloop.counter }}").innerHTML = "На данный момент отсутствуют запущенные задачи";
+                	{%else%}
+                        	document.getElementById("job_{{ forloop.counter }}").innerHTML = "{{state}}";
+			{%endif%}
+                {%endfor%}
+        });
+        // if failure:
+    });
+
+});
+</script>
+
+{%endblock%}

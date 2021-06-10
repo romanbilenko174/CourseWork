@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block navbar_templates %}class="active"{% endblock %}
+{% block content %}
+<script language="javascript">
+$(function() {
+    function readable_status(status, progress){
+        var color = "primary";
+        if (status == "active"){
+            color = "success";
+            status = "Активен";
+        }
+        else if (status == "creating") {
+            color = "warning";
+            status = "Создание";
+        }
+        return '<span class="label label-' + color + '">' + status + (progress != null ? ' ' + progress + '%' : '') + '</span>';
+    }
+    // Disconnected flag
+    var disconnected = 0;
+    function load_list(){
+        $('#online').attr('class', 'glyphicon glyphicon-refresh');
+        if(disconnected)
+            $('#online').css('color', '#CC0000');
+        else
+            $('#online').css('color', '#000000');
+        disconnected = 1;
+        $.ajax({
+            url: '/templates',
+            timeout: 5000,
+            statusCode: {
+                403: function(){
+                    window.location.reload();
+                }
+            },
+            success: function( templates, status, xhr ){
+                disconnected = 0;
+                $('td').parent().remove();
+                $.each(templates, function (key, template) {
+                    var tr = $('<tr></tr>');
+                    tr.append('<td class="name">' + template.name + '</td>');
+                    tr.append('<td class="updated_at">' + template.updated_at + '</td>');
+                    tr.append('<td class="status">' + readable_status(template.status, template.progress) + '</td>');
+                    tr.append('<td class="action"><input type="hidden" class="uuid" value="' + template.uuid + '" /><button name="delete" class="btn btn-xs btn-danger">Удалить</button></td>');
+                    $('table').append(tr);
+                });
+                //$('.toggle').toggles();
+		        $('#online').attr('class', 'glyphicon glyphicon-globe text-success').css('color', '#00CC00');
+            }
+        });
+    }
+    function update_list(){
+        load_list();
+    }
+
+        $('#content').on('click', '[name=delete]', function () {
+            template = $(this).parent().parent().find('.name').html();
+            uuid = $(this).parent().parent().find('.uuid').val();
+            if(confirm('Удалить шаблон ' + template + '?') && typeof template != 'undefined'){
+                    $.ajax('/templates', {
+                        data: JSON.stringify({"uuid": uuid}),
+                        contentType : 'application/json',
+                        type: 'DELETE',
+                        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                        success: function(data, status) {
+                            if (typeof(data.detail) != "undefined")
+                                alert(data.detail);
+                            update_list();
+                        }
+                    })
+                }
+        });
+
+    setInterval(function() {
+        update_list();
+    }, 10000);
+    update_list();
+});
+</script>
+<div class="text-center">
+    <div style="margin: 0 auto; max-width: 700px; display: block;" class="panel panel-default">
+      <div id="content">
+          <table class="table table-condensed">
+              <tr>
+                  <th class = "col-md-2 text-center">Имя</th>
+                  <th class = "col-md-1 text-center">Дата</th>
+                  <th class = "col-md-1 text-center">Статус</th>
+                  <th class = "col-md-1 text-center">Действие</th>
+              </tr>
+              <tr>
+                  <td colspan = "4" class = "text-center">Загрузка...</td>
+              </tr>
+          </table>
+      </div>
+    </div>
+</div>
+{% endblock %}
+
